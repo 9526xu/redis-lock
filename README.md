@@ -2,6 +2,8 @@
 
 ## 注意点
 
+### 类型转换问题
+
 从 Lua 转换到 Redis：
 
 Lua number -> Redis integer reply / Lua 数字转换成 Redis 整数
@@ -17,5 +19,15 @@ Lua boolean true -> Redis integer reply with value of 1 / Lua 布尔值 true 转
 例子：
 
 ![](https://tva1.sinaimg.cn/large/007S8ZIlly1gf2jibpln1j311008udgi.jpg)
+
+### springboot redisTemplate 不支持 cluster
+
+**性能优化**
+
+```java
+this.sha1 = DigestUtils.sha1DigestAsHex(getScriptAsString());
+```
+
+[issue](https://jira.spring.io/browse/DATAREDIS-1005)
 
  

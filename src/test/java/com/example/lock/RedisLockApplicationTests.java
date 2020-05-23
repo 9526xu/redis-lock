@@ -140,7 +140,7 @@ class RedisLockApplicationTests {
 
     @Test
     public void testLua() {
-        String lua="if (redis.call('exists', KEYS[1]) == 0) then " +
+        String lua = "if (redis.call('exists', KEYS[1]) == 0) then " +
                 "redis.call('hincrby', KEYS[1], ARGV[2], 1); " +
                 "redis.call('pexpire', KEYS[1], ARGV[1]); " +
                 "return nil; " +
@@ -152,5 +152,22 @@ class RedisLockApplicationTests {
                 "end; " +
                 "return redis.call('pttl', KEYS[1]);";
         System.out.println(lua);
+    }
+
+    @Test
+    public void evalshaTest() {
+        String luaScript = "232fd51614574cf0867b83d384a5e898cfd24e5a";
+
+        stringRedisTemplate.execute((RedisCallback) connection -> {
+
+            Object nativeConnection = connection.getNativeConnection();
+            if (nativeConnection instanceof Jedis) {
+                Object obj = ((Jedis) nativeConnection).evalsha(luaScript);
+                System.out.println(obj);
+            }
+            return null;
+
+        });
+
     }
 }
