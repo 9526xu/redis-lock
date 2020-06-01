@@ -4,15 +4,17 @@
 --- DateTime: 2020/5/23 17:41
 ---
 
+---- 1 代表 true
+---- 0 代表 false
 
 if (redis.call('exists', KEYS[1]) == 0) then
     redis.call('hincrby', KEYS[1], ARGV[2], 1);
     redis.call('pexpire', KEYS[1], ARGV[1]);
-    return true;
+    return 1;
 end ;
 if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then
     redis.call('hincrby', KEYS[1], ARGV[2], 1);
     redis.call('pexpire', KEYS[1], ARGV[1]);
-    return true;
+    return 1;
 end ;
-return false;
+return 0;

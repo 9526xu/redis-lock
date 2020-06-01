@@ -27,19 +27,20 @@ public class RedisLock {
     private DefaultRedisScript lockScript;
 
     private DefaultRedisScript unlockScript;
+
     @PostConstruct
     public void init() {
         String lockLuaScript = "if (redis.call('exists', KEYS[1]) == 0) then\n" +
                 "    redis.call('hincrby', KEYS[1], ARGV[2], 1);\n" +
                 "    redis.call('pexpire', KEYS[1], ARGV[1]);\n" +
-                "    return true;\n" +
+                "    return 1;\n" +
                 "end ;\n" +
                 "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then\n" +
                 "    redis.call('hincrby', KEYS[1], ARGV[2], 1);\n" +
                 "    redis.call('pexpire', KEYS[1], ARGV[1]);\n" +
-                "    return true;\n" +
+                "    return 1;\n" +
                 "end ;\n" +
-                "return false;";
+                "return 0;";
 
         lockScript = new DefaultRedisScript();
         lockScript.setScriptText(lockLuaScript);
@@ -49,10 +50,10 @@ public class RedisLock {
                 "end ;\n" +
                 "local counter = redis.call('hincrby', KEYS[1], ARGV[1], -1);\n" +
                 "if (counter > 0) then\n" +
-                "    return false;\n" +
+                "    return 0;\n" +
                 "else\n" +
                 "    redis.call('del', KEYS[1]);\n" +
-                "    return true;\n" +
+                "    return 1;\n" +
                 "end ;\n" +
                 "return nil;";
 
@@ -165,9 +166,13 @@ public class RedisLock {
     }
 
     public Boolean convert(Object obj) {
+        Long result;
         if (obj == null) {
             return null;
+        } else {
+            result = Long.valueOf(obj.toString());
         }
-        return Long.valueOf(1).equals(obj) || "OK".equals(obj);
+        // 大于 0 都返回 true
+        return result.compareTo(0L) > 0;
     }
 }

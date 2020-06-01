@@ -1,11 +1,7 @@
 package com.example.lock;
 
-import lombok.SneakyThrows;
+import lombok.Data;
 import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author andyXu xu9529@gmail.com
@@ -13,25 +9,52 @@ import java.util.concurrent.TimeUnit;
  */
 public class EasyTest {
 
-    @SneakyThrows
     @Test
     public void test() {
-        Object o1 = true ? new Integer(1) : new Double(2.0);
+        boolean flag = true; //设置成true，保证表达式 2 被执行
+        Integer nullInteger = null;
+        Long objLong = Long.valueOf(88l);
 
-        Object o2;
+        Object result = Long.valueOf(flag ? (long)nullInteger.intValue() : objLong.longValue());
 
-        if (true)
-            o2 = new Integer(1);
-        else
-            o2 = new Double(2.0);
-        System.out.println(o1);
-        System.out.println(o2);
 
-        TimeUnit.HOURS.sleep(1L);
+    }
 
-        Map map = new HashMap();
-        Boolean b = Boolean.valueOf(map == null ? false : ((Boolean)map.get("test")).booleanValue());
-        System.out.println(b);
 
+    public static Integer testObject() {
+        //  private Integer code;
+        SimpleObj simpleObj = new SimpleObj();
+        // 其他业务逻辑
+
+//        if (simpleObj == null) {
+//            return -1;
+//        } else {
+//            return simpleObj.getCode();
+//        }
+
+        return simpleObj == null ? -1 : simpleObj.getCode();
+    }
+
+    @Test
+    public void testObjectCondition() {
+        System.out.println(testObject());
+    }
+
+    @Data
+    public static class SimpleObj {
+        private Integer code;
+    }
+
+    private Integer objectFoo() {
+        return null;
+
+    }
+
+    private int simpleFoo() {
+        return 66;
+    }
+
+    private boolean someCondition() {
+        return true;
     }
 }

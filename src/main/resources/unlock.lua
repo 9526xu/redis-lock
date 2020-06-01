@@ -13,10 +13,10 @@ end ;
 local counter = redis.call('hincrby', KEYS[1], ARGV[1], -1);
 -- 小于等于 0 代表可以解锁
 if (counter > 0) then
-    return false;
+    return 0;
 else
     redis.call('del', KEYS[1]);
-    return true;
+    return 1;
 end ;
 return nil;
 

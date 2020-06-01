@@ -20,6 +20,17 @@ Lua boolean true -> Redis integer reply with value of 1 / Lua 布尔值 true 转
 
 ![](https://tva1.sinaimg.cn/large/007S8ZIlly1gf2jibpln1j311008udgi.jpg)
 
+
+lua true -> Redis Integer 1 ---> Jedis Long
+
+lua false -> Redis Null ----> Jedis false
+
+
+
+
+
+
+
 ### springboot redisTemplate 不支持 cluster
 
 **性能优化**
