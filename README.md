@@ -26,6 +26,11 @@ lua true -> Redis Integer 1 ---> Jedis Long
 lua false -> Redis Null ----> Jedis false
 
 
+redis 操作常见返回数：
+
+- ok
+- 1
+- 0
 
 
 
