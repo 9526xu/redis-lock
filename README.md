@@ -28,6 +28,9 @@ Lua boolean true -> Redis integer reply with value of 1 / Lua 布尔值 true 转
 this.sha1 = DigestUtils.sha1DigestAsHex(getScriptAsString());
 ```
 
+![](https://imgkr.cn-bj.ufileos.com/8258cbfc-6a6d-408f-9c6c-0b33326cbb64.png)
+
+
 [issue](https://jira.spring.io/browse/DATAREDIS-1005)
 
  

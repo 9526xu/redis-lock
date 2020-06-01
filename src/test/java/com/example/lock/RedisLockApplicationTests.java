@@ -48,6 +48,8 @@ class RedisLockApplicationTests {
         redisScript.setScriptText(luaScript);
         redisScript.setResultType(String.class);
 
+
+
         String result = stringRedisTemplate.execute(redisScript, Collections.singletonList("foo"));
 
         System.out.println(result);
