@@ -1,6 +1,9 @@
 package com.example.lock;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.RedisSystemException;
 import org.springframework.data.redis.core.RedisCallback;
@@ -8,10 +11,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
 
 import javax.annotation.PostConstruct;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -19,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  * @author andyXu xu9529@gmail.com
  * @date 2020/5/23
  */
+@Slf4j
 @Service
 public class RedisLock {
     @Autowired
@@ -29,36 +35,17 @@ public class RedisLock {
     private DefaultRedisScript unlockScript;
 
     @PostConstruct
-    public void init() {
-        String lockLuaScript = "if (redis.call('exists', KEYS[1]) == 0) then\n" +
-                "    redis.call('hincrby', KEYS[1], ARGV[2], 1);\n" +
-                "    redis.call('pexpire', KEYS[1], ARGV[1]);\n" +
-                "    return 1;\n" +
-                "end ;\n" +
-                "if (redis.call('hexists', KEYS[1], ARGV[2]) == 1) then\n" +
-                "    redis.call('hincrby', KEYS[1], ARGV[2], 1);\n" +
-                "    redis.call('pexpire', KEYS[1], ARGV[1]);\n" +
-                "    return 1;\n" +
-                "end ;\n" +
-                "return 0;";
-
-        lockScript = new DefaultRedisScript();
-        lockScript.setScriptText(lockLuaScript);
-
-        String unlockLuaScript = "if (redis.call('hexists', KEYS[1], ARGV[1]) == 0) then\n" +
-                "    return nil;\n" +
-                "end ;\n" +
-                "local counter = redis.call('hincrby', KEYS[1], ARGV[1], -1);\n" +
-                "if (counter > 0) then\n" +
-                "    return 0;\n" +
-                "else\n" +
-                "    redis.call('del', KEYS[1]);\n" +
-                "    return 1;\n" +
-                "end ;\n" +
-                "return nil;";
-
-        unlockScript = new DefaultRedisScript();
-        unlockScript.setScriptText(unlockLuaScript);
+    private void init() {
+        try {
+            String lockLuaScript = IOUtils.toString(ResourceUtils.getURL("classpath:lock.lua").openStream());
+            lockScript = new DefaultRedisScript();
+            lockScript.setScriptText(lockLuaScript);
+            String unlockLuaScript = IOUtils.toString(ResourceUtils.getURL("classpath:unlock.lua").openStream());
+            unlockScript = new DefaultRedisScript();
+            unlockScript.setScriptText(unlockLuaScript);
+        } catch (IOException e) {
+            log.error("RedisLockService init failed", Throwables.getStackTraceAsString(e));
+        }
     }
 
 
@@ -71,7 +58,7 @@ public class RedisLock {
      * @param unit         锁释放时间单位
      * @return
      */
-    public boolean tryLock(String lockName, String reentrantKey, long leaseTime, TimeUnit unit) {
+    public boolean tryReentrancyLock(String lockName, String reentrantKey, long leaseTime, TimeUnit unit) {
         long internalLockLeaseTime = unit.toMillis(leaseTime);
         Boolean result = stringRedisTemplate.execute((RedisCallback<Boolean>) connection -> {
             Object innerResult = eval(connection.getNativeConnection(), lockScript, Lists.newArrayList(lockName), Lists.newArrayList(String.valueOf(internalLockLeaseTime), reentrantKey));
@@ -141,6 +128,7 @@ public class RedisLock {
     public void unlock(String lockName, String reentrantKey) {
         Boolean result = stringRedisTemplate.execute((RedisCallback<Boolean>) connection -> {
             Object innerResult = eval(connection.getNativeConnection(), unlockScript, Lists.newArrayList(lockName), Lists.newArrayList(reentrantKey));
+            // 返回 null 代表解锁失败  1 代表 解锁成功，lock 被删除  0 代表可重入key 减1
             return convert(innerResult);
         });
 
@@ -172,7 +160,11 @@ public class RedisLock {
         } else {
             result = Long.valueOf(obj.toString());
         }
-        // 大于 0 都返回 true
+        // redis 返回 1 代表 成功
         return result.compareTo(0L) > 0;
+    }
+
+    public boolean isLocked(String lockName) {
+        return stringRedisTemplate.hasKey(lockName);
     }
 }
