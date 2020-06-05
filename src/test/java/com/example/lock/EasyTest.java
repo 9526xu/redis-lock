@@ -15,8 +15,9 @@ public class EasyTest {
         Integer nullInteger = null;
         Long objLong = Long.valueOf(88l);
 
-        Object result = Long.valueOf(flag ? (long)nullInteger.intValue() : objLong.longValue());
-
+        Object result = Long.valueOf(flag ? (long) nullInteger.intValue() : objLong.longValue());
+//        Redisson redisson = new Redisson();
+//        RLock redissonLock = redisson.getLock("asda");
 
     }
 

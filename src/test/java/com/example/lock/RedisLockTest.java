@@ -79,7 +79,7 @@ public class RedisLockTest {
         Thread thread1 = new Thread() {
             @Override
             public void run() {
-                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey+Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
+                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey + Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
                 Assertions.assertEquals(false, result);
             }
         };
@@ -101,9 +101,11 @@ public class RedisLockTest {
 
         Thread t = new Thread() {
             public void run() {
-                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey+Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
+                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey + Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
                 Assertions.assertEquals(false, result);
-            };
+            }
+
+            ;
         };
 
         t.start();
@@ -114,11 +116,13 @@ public class RedisLockTest {
 
         Thread t2 = new Thread() {
             public void run() {
-                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey+Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
+                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey + Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
                 Assertions.assertEquals(true, result);
                 // 解锁 redis 一次
-                redisLock.unlock(lockName, reentrentKey+Thread.currentThread().getName());
-            };
+                redisLock.unlock(lockName, reentrentKey + Thread.currentThread().getName());
+            }
+
+            ;
         };
 
         t2.start();
@@ -149,11 +153,9 @@ public class RedisLockTest {
         String reentrentKey = UUID.randomUUID().toString();
 
 
-
-
         Thread t = new Thread() {
             public void run() {
-                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey+Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
+                boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey + Thread.currentThread().getName(), 100, TimeUnit.MINUTES);
                 Assertions.assertEquals(true, result);
 
                 try {
@@ -164,8 +166,10 @@ public class RedisLockTest {
                 }
 
                 // 解锁 redis 一次
-                redisLock.unlock(lockName, reentrentKey+Thread.currentThread().getName());
-            };
+                redisLock.unlock(lockName, reentrentKey + Thread.currentThread().getName());
+            }
+
+            ;
         };
 
         t.start();
@@ -182,14 +186,14 @@ public class RedisLockTest {
         String lockName = UUID.randomUUID().toString();
         String reentrentKey = UUID.randomUUID().toString();
 
-        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*2);
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
 
-        CyclicBarrier cyclicBarrier=new CyclicBarrier(100);
-        CountDownLatch countDownLatch=new CountDownLatch(100);
+        CyclicBarrier cyclicBarrier = new CyclicBarrier(100);
+        CountDownLatch countDownLatch = new CountDownLatch(100);
 
-        for (int i = 0; i <iterations ; i++) {
-            executor.submit(()->{
+        for (int i = 0; i < iterations; i++) {
+            executor.submit(() -> {
                 boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey, 100, TimeUnit.MINUTES);
                 Assertions.assertEquals(true, result);
                 lockedCounter.incrementAndGet();
@@ -201,15 +205,31 @@ public class RedisLockTest {
         countDownLatch.await();
 
 
-
         Assertions.assertFalse(redisLock.isLocked(lockName));
-        Assertions.assertEquals(iterations,lockedCounter.get());
+        Assertions.assertEquals(iterations, lockedCounter.get());
     }
 
+    @Test
+    public void forceUnlock() {
+        String lockName = UUID.randomUUID().toString();
+        String reentrentKey = UUID.randomUUID().toString();
+
+        boolean result = redisLock.tryReentrancyLock(lockName, reentrentKey, 100, TimeUnit.DAYS);
+        Assertions.assertEquals(true, result);
+
+        result = redisLock.tryReentrancyLock(lockName, reentrentKey, 100, TimeUnit.DAYS);
+        Assertions.assertEquals(true, result);
+
+        result = redisLock.forceUnlock(lockName);
+        Assertions.assertEquals(true, result);
+
+        result = redisLock.forceUnlock(lockName);
+        Assertions.assertEquals(false, result);
+
+        Assertions.assertEquals(false, redisLock.isLocked(lockName));
 
 
-
-
+    }
 
 
 //    @Test

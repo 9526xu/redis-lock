@@ -34,6 +34,8 @@ public class RedisLock {
 
     private DefaultRedisScript unlockScript;
 
+    private DefaultRedisScript forceUnlockScript;
+
     @PostConstruct
     private void init() {
         try {
@@ -43,6 +45,12 @@ public class RedisLock {
             String unlockLuaScript = IOUtils.toString(ResourceUtils.getURL("classpath:unlock.lua").openStream());
             unlockScript = new DefaultRedisScript();
             unlockScript.setScriptText(unlockLuaScript);
+
+            forceUnlockScript= new DefaultRedisScript();
+            String forceUnlockLuaScript = IOUtils.toString(ResourceUtils.getURL("classpath:force_unlock.lua").openStream());
+            forceUnlockScript.setScriptText(forceUnlockLuaScript);
+
+
         } catch (IOException e) {
             log.error("RedisLockService init failed", Throwables.getStackTraceAsString(e));
         }
@@ -166,5 +174,24 @@ public class RedisLock {
 
     public boolean isLocked(String lockName) {
         return stringRedisTemplate.hasKey(lockName);
+    }
+
+    public boolean forceUnlock(String lockName){
+        Boolean result = stringRedisTemplate.execute((RedisCallback<Boolean>) connection -> {
+            Object innerResult = eval(connection.getNativeConnection(), forceUnlockScript, Lists.newArrayList(lockName), Lists.newArrayList());
+            // 返回 null 代表解锁失败  1 代表 解锁成功，lock 被删除  0 代表可重入key 减1
+            return convert(innerResult);
+        });
+        return result;
+    }
+
+    public static void main(String[] args) {
+        String lua="if (redis.call('del', KEYS[1]) == 1) then "
+                + "redis.call('publish', KEYS[2], ARGV[1]); "
+                + "return 1 "
+                + "else "
+                + "return 0 "
+                + "end";
+        System.out.println(lua);
     }
 }
