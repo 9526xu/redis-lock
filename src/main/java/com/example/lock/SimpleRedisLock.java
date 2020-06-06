@@ -3,13 +3,14 @@ package com.example.lock;
 import com.google.common.collect.Lists;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -49,21 +50,29 @@ public class SimpleRedisLock {
      * @param unit
      * @return
      */
-    private Boolean doOldTryLock(String lockName, String request, long leaseTime, TimeUnit unit) {
-        long internalLockLeaseTime = unit.toMillis(leaseTime);
+    public Boolean doOldTryLock(String lockName, String request, long leaseTime, TimeUnit unit) {
         Boolean result = stringRedisTemplate.execute((RedisCallback<Boolean>) connection -> {
             RedisSerializer valueSerializer = stringRedisTemplate.getValueSerializer();
             RedisSerializer keySerializer = stringRedisTemplate.getKeySerializer();
-            Object obj = connection.execute("set", keySerializer.serialize(lockName),
+
+            Boolean innerResult = connection.set(keySerializer.serialize(lockName),
                     valueSerializer.serialize(request),
-                    "NX".getBytes(StandardCharsets.UTF_8),
-                    "PX".getBytes(StandardCharsets.UTF_8),
-                    String.valueOf(internalLockLeaseTime).getBytes(StandardCharsets.UTF_8));
-            return obj != null;
+                    Expiration.from(leaseTime, unit),
+                    RedisStringCommands.SetOption.SET_IF_ABSENT
+            );
+            return innerResult;
         });
         return result;
     }
 
+    /**
+     * 解锁
+     * 如果传入应用标识与之前加锁一致，解锁成功
+     * 否则直接返回
+     * @param lockName 锁
+     * @param request 唯一标识
+     * @return
+     */
     public Boolean unlock(String lockName, String request) {
         DefaultRedisScript<Boolean> unlockScript = new DefaultRedisScript<>();
         unlockScript.setLocation(new ClassPathResource("simple_unlock.lua"));

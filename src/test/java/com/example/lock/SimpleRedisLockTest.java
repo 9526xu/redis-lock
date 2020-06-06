@@ -51,8 +51,28 @@ public class SimpleRedisLockTest {
 
         Boolean unlock = redisLock.unlock(lock, request);
 
+    }
+
+    @Test
+    public void lockOldAndUnlockTest() {
 
     }
+
+    @Test
+    public void testOldUnlock() {
+
+        String lock = "lock";
+        String request = UUID.randomUUID().toString();
+        Boolean result = redisLock.doOldTryLock(lock, request, 100, TimeUnit.SECONDS);
+
+        Assertions.assertTrue(result);
+
+        Boolean unlock = redisLock.unlock(lock, request);
+
+        Assertions.assertTrue(unlock);
+    }
+
+
 
 
 }
