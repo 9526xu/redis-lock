@@ -1,4 +1,4 @@
-package com.example.lock;
+package com.example.lock.old;
 
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -21,12 +21,20 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
+ *
+ * Spring-data-redis 低于 2.1.9,底层 redis 连接采用 Jedis，在 redis cluster 执行 eval & evalsha 将会抛出 InvalidDataAccessApiUsageException。
+ * 具体原因是因为，Spring-data-redis 在 redis cluster 没有实现这两个。
+ * 所以这种情况下，需要使用原生的 JedisCluster 连接执行 eval 命令
+ * </p>
  * @author andyXu xu9529@gmail.com
  * @date 2020/5/23
+ *
+ *
+ *
  */
 @Slf4j
 @Service
-public class RedisLock {
+public class RedisReentrancyLock {
     @Autowired
     StringRedisTemplate stringRedisTemplate;
 
@@ -66,7 +74,7 @@ public class RedisLock {
      * @param unit         锁释放时间单位
      * @return
      */
-    public boolean tryReentrancyLock(String lockName, String reentrantKey, long leaseTime, TimeUnit unit) {
+    public boolean tryLock(String lockName, String reentrantKey, long leaseTime, TimeUnit unit) {
         long internalLockLeaseTime = unit.toMillis(leaseTime);
         Boolean result = stringRedisTemplate.execute((RedisCallback<Boolean>) connection -> {
             Object innerResult = eval(connection.getNativeConnection(), lockScript, Lists.newArrayList(lockName), Lists.newArrayList(String.valueOf(internalLockLeaseTime), reentrantKey));
