@@ -43,6 +43,20 @@ public class EasyTest {
 
     }
 
+    @Test
+    public void jedisStatusTest() {
+        Jedis jedis = new Jedis("localhost", 6379);
+        jedis.auth("1234qwer");
+
+
+        String str = jedis.get("test1111");
+        String set = jedis.set("test", "111");
+        Boolean test = jedis.exists("test");
+
+
+
+    }
+
 
     @Test
     public void test() {
