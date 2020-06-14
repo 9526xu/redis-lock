@@ -69,8 +69,9 @@ public class SimpleRedisLock {
      * 解锁
      * 如果传入应用标识与之前加锁一致，解锁成功
      * 否则直接返回
+     *
      * @param lockName 锁
-     * @param request 唯一标识
+     * @param request  唯一标识
      * @return
      */
     public Boolean unlock(String lockName, String request) {
@@ -78,6 +79,16 @@ public class SimpleRedisLock {
         unlockScript.setLocation(new ClassPathResource("simple_unlock.lua"));
         unlockScript.setResultType(Boolean.class);
         return stringRedisTemplate.execute(unlockScript, Lists.newArrayList(lockName), request);
+    }
+
+    /**
+     * 强制解锁
+     *
+     * @param lockName
+     * @return true:解锁成功，false：锁不存在，或者锁已经超时，
+     */
+    public Boolean forceUnlock(String lockName) {
+        return stringRedisTemplate.delete(lockName);
     }
 
 }

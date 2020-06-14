@@ -54,7 +54,6 @@ public class EasyTest {
         Boolean test = jedis.exists("test");
 
 
-
     }
 
 
@@ -99,6 +98,15 @@ public class EasyTest {
         return null;
 
     }
+
+    public synchronized void a() {
+        b();
+    }
+
+    public synchronized void b() {
+        // pass
+    }
+
 
     private int simpleFoo() {
         return 66;

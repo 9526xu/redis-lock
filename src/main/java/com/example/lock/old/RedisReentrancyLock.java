@@ -83,6 +83,21 @@ public class RedisReentrancyLock {
         return result;
     }
 
+    private Object eval(Object nativeConnection, RedisScript redisScript, final List<String> keys, final List<String> args) {
+
+        Object innerResult = null;
+        // 集群模式和单点模式虽然执行脚本的方法一样，但是没有共同的接口，所以只能分开执行
+        // 集群
+        if (nativeConnection instanceof JedisCluster) {
+            innerResult = evalByCluster((JedisCluster) nativeConnection, redisScript, keys, args);
+        }
+        // 单点
+        else if (nativeConnection instanceof Jedis) {
+            innerResult = evalBySingle((Jedis) nativeConnection, redisScript, keys, args);
+        }
+        return innerResult;
+    }
+
     private Object evalBySingle(Jedis jedis, RedisScript redisScript, final List<String> keys, final List<String> args) {
         // 先执行 evalsha
         Object innerResult;
@@ -154,20 +169,7 @@ public class RedisReentrancyLock {
         }
     }
 
-    private Object eval(Object nativeConnection, RedisScript redisScript, final List<String> keys, final List<String> args) {
 
-        Object innerResult = null;
-        // 集群模式和单点模式虽然执行脚本的方法一样，但是没有共同的接口，所以只能分开执行
-        // 集群
-        if (nativeConnection instanceof JedisCluster) {
-            innerResult = evalByCluster((JedisCluster) nativeConnection, redisScript, keys, args);
-        }
-        // 单点
-        else if (nativeConnection instanceof Jedis) {
-            innerResult = evalBySingle((Jedis) nativeConnection, redisScript, keys, args);
-        }
-        return innerResult;
-    }
 
     public Boolean convert(Object obj) {
         Long result;
