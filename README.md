@@ -2,7 +2,7 @@
 
 欢迎微信关注**程序通事**
 
-![](https://tva1.sinaimg.cn/large/007S8ZIlly1gfryjmj0u9j30p00dwtaq.jpg)
+![](https://tva1.sinaimg.cn/large/007S8ZIlly1gfryv81rtqj309k09kmx3.jpg)
 
 ## 分布式锁
 
